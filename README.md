@@ -19,17 +19,17 @@ A modern, production-ready vendor management platform built with Vite, React, an
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         VendorVerse Platform                         │
+│                         VendorVerse Platform                        │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────────┐
 │                          Client Layer (React)                        │
 ├──────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│  Browser: React 18+ with TypeScript                                │
-│  Routing: React Router with 9 page components                      │
-│  UI Components: 40+ shadcn/ui components + 8 custom components    │
-│  State: Context API (LanguageContext, VendorContext)             │
+│  Browser: React 18+ with TypeScript                                  │
+│  Routing: React Router with 9 page components                        │
+│  UI Components: 40+ shadcn/ui components + 8 custom components       │
+│  State: Context API (LanguageContext, VendorContext)                 │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
                               ↓ API Calls
@@ -39,14 +39,14 @@ A modern, production-ready vendor management platform built with Vite, React, an
 │                         Backend API Layer                            │
 ├──────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│  Node.js / TypeScript Runtime                                      │
+│  Node.js / TypeScript Runtime                                        │
 │                                                                      │
-│  Endpoints:                                                         │
-│  • GET  /api/health                - Health check                  │
-│  • GET  /api/vendors               - List all vendors              │
-│  • POST /api/vendors               - Create vendor                 │
-│  • POST /api/vendors/view          - Get vendor details            │
-│  • POST /api/vendor-view           - Track vendor view             │
+│  Endpoints:                                                          │
+│  • GET  /api/health                - Health check                    │
+│  • GET  /api/vendors               - List all vendors                │
+│  • POST /api/vendors               - Create vendor                   │
+│  • POST /api/vendors/view          - Get vendor details              │
+│  • POST /api/vendor-view           - Track vendor view               │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
                               ↓
@@ -56,10 +56,10 @@ A modern, production-ready vendor management platform built with Vite, React, an
 │                        Vendor Processing                             │
 ├──────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│  • isOpenNow.ts      - Check business hours & availability        │
-│  • antiFakeDetection.ts - Detect fraudulent vendors               │
-│  • vendorStore.ts    - Vendor data management                     │
-│  • utils.ts          - Common utilities                            │
+│  • isOpenNow.ts      - Check business hours & availability           │
+│  • antiFakeDetection.ts - Detect fraudulent vendors                  │
+│  • vendorStore.ts    - Vendor data management                        │
+│  • utils.ts          - Common utilities                              │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
 ```
