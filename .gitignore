@@ -43,6 +43,7 @@ coverage/
 .cache/
 .parcel-cache/
 .vite/
+.npm-cache/
 
 # Publish temporary files
 .publish/
