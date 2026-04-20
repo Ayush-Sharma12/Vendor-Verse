@@ -8,7 +8,7 @@ import {
   MapPin, Clock, ShoppingBasket, Share2, MessageCircle,
   CreditCard, ArrowLeft, CheckCircle2, Sparkles,
   User, TrendingUp, Heart, Eye, Copy, Check,
-  Star, Zap, BadgeCheck, ExternalLink, QrCode
+  Star, Zap, BadgeCheck, ExternalLink, QrCode, Camera
 } from 'lucide-react';
 
 /* ─── animation variants ──────────────────────────────────────── */
@@ -176,7 +176,7 @@ function getAutoReviews(category: string, vendorName: string, lang: string) {
 }
 
 /* ─── Share Toast ─────────────────────────────────────────────── */
-function ShareToast({ visible }: { visible: boolean }) {
+function ShareToast({ visible, shareText }: { visible: boolean; shareText?: string }) {
   return (
     <AnimatePresence>
       {visible && (
@@ -190,8 +190,10 @@ function ShareToast({ visible }: { visible: boolean }) {
           <div className="w-7 h-7 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
             <Check size={14} />
           </div>
-          <span className="font-bold text-sm">Link copied to clipboard!</span>
-          <span className="text-green-400 text-xs font-mono truncate max-w-[160px]">{window.location.href}</span>
+          <div>
+            <span className="font-bold text-sm block">Link copied to clipboard!</span>
+            {shareText && <span className="text-green-400 text-xs font-mono truncate max-w-[280px] block mt-1">{shareText.split('\n')[0]}</span>}
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -214,8 +216,20 @@ export default function VendorProfilePage() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [activeMenuItem, setActiveMenuItem] = useState<number | null>(null);
+  const [, setNowTick] = useState(0);
 
   const vendor = vendors.find(v => v.id === id);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => setNowTick((n) => n + 1), 60_000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // Record a real backend view count (best-effort)
+  useEffect(() => {
+    if (!vendor) return;
+    fetch(`/api/vendors?viewId=${encodeURIComponent(vendor.id)}`).catch(() => {});
+  }, [vendor?.id]);
 
   useEffect(() => {
     if (vendors.length > 0 && !vendor) {
@@ -265,7 +279,7 @@ export default function VendorProfilePage() {
 
   // Always copy — never use navigator.share (broken in iframes/preview)
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(profileUrl).then(() => {
+    navigator.clipboard.writeText(shareableLink).then(() => {
       setCopiedLink(true);
       setShowToast(true);
       setTimeout(() => setCopiedLink(false), 3000);
@@ -285,36 +299,38 @@ export default function VendorProfilePage() {
 
   const displayRating = vendor.rating ?? (3.8 + Math.random() * 0.9);
   const displayReviews = vendor.reviews ?? Math.floor(Math.random() * 20) + 3;
-  const [, setNowTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setNowTick((n) => n + 1), 60_000);
-    return () => clearInterval(id);
-  }, []);
   const openNow = isOpenNow(vendor.hours);
-
-  // Record a real backend view count (best-effort)
-  useEffect(() => {
-    fetch(`/api/vendors?viewId=${encodeURIComponent(vendor.id)}`).catch(() => {});
-  }, [vendor.id]);
+  
+  // Create shareable link with vendor info
+  const baseUrl = window.location.origin;
+  const shareableLink = `${baseUrl}/vendor/${vendor.id}?ref=${encodeURIComponent(vendor.vendor_name)}`;
+  const shareableText = `🏪 ${vendor.vendor_name} - ${vendor.category}\n📍 ${vendor.location}\n⭐ ${displayRating.toFixed(1)} (${displayReviews} reviews)\n🔗 ${shareableLink}`;
 
   return (
-    <div className="text-[#1C1C1C] max-w-2xl mx-auto px-4 py-8">
+    <div className="text-[#1C1C1C] min-h-screen bg-gray-50">
 
       {/* ── Toast ── */}
-      <ShareToast visible={showToast} />
+      <ShareToast visible={showToast} shareText={shareableText} />
 
       {/* ── Back ── */}
-      <motion.button
-        initial={{ opacity: 0, x: -16 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.35 }}
-        whileHover={{ x: -4 }}
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-gray-400 hover:text-[#F97316] transition-colors mb-6 font-semibold text-sm"
-      >
-        <ArrowLeft size={16} />
-        {t('Back to Browse', 'Wapas Browse Karo')}
-      </motion.button>
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-3 md:py-4">
+        <div className="max-w-2xl mx-auto">
+          <motion.button
+            initial={{ opacity: 0, x: -16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.35 }}
+            whileHover={{ x: -4 }}
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-400 hover:text-[#F97316] transition-colors font-semibold text-xs sm:text-sm"
+          >
+            <ArrowLeft size={16} />
+            <span className="hidden sm:inline">{t('Back to Browse', 'Wapas Browse Karo')}</span>
+            <span className="sm:hidden">Back</span>
+          </motion.button>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 md:py-8">
 
       {/* ── Status pills ── */}
         <motion.div
@@ -323,119 +339,161 @@ export default function VendorProfilePage() {
           animate="show"
           className="flex flex-wrap items-center gap-2 mb-5"
         >
-          <motion.span variants={fadeUp} className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-700 text-xs font-bold px-3 py-1.5 rounded-full">
-            <Eye size={12} className="animate-pulse" />
-            {viewers} {t('people viewing now', 'log abhi dekh rahe hain')}
+          <motion.span variants={fadeUp} className="inline-flex items-center gap-1 sm:gap-1.5 bg-orange-50 border border-orange-200 text-orange-700 text-xs font-bold px-2 sm:px-3 py-1.5 rounded-full">
+            <Eye size={12} className="animate-pulse flex-shrink-0" />
+            <span className="hidden sm:inline">{viewers} {t('people viewing now', 'log abhi dekh rahe hain')}</span>
+            <span className="sm:hidden">{viewers} viewing</span>
           </motion.span>
-          {typeof vendor.views === 'number' && (
-            <motion.span variants={fadeUp} className="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full">
-              <Eye size={12} />
-              {vendor.views} {t('total views', 'total views')}
+          
+          <div className={typeof vendor.views === 'number' ? '' : 'hidden'}>
+            <motion.span variants={fadeUp} className="inline-flex items-center gap-1 sm:gap-1.5 bg-gray-100 border border-gray-200 text-gray-700 text-xs font-bold px-2 sm:px-3 py-1.5 rounded-full">
+              <Eye size={12} className="flex-shrink-0" />
+              <span className="hidden sm:inline">{vendor.views} total views</span>
+              <span className="sm:hidden">{vendor.views} views</span>
             </motion.span>
-          )}
-        {isNew && (
-          <motion.span variants={scaleIn} className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-full animate-pulse">
-            <Sparkles size={12} />
-            {t('Newly Registered!', 'Naya Vendor!')}
+          </div>
+          
+          <div className={isNew ? '' : 'hidden'}>
+            <motion.span variants={scaleIn} className="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold px-2 sm:px-3 py-1.5 rounded-full animate-pulse">
+              <Sparkles size={12} className="flex-shrink-0" />
+              <span className="hidden sm:inline">{t('Newly Registered!', 'Naya Vendor!')}</span>
+              <span className="sm:hidden">New</span>
+            </motion.span>
+          </div>
+          
+          <motion.span
+            variants={scaleIn}
+            className={`inline-flex items-center gap-1 text-xs font-bold px-2 sm:px-3 py-1.5 rounded-full ${
+              openNow ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full inline-block flex-shrink-0 ${openNow ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`} />
+            {openNow ? t('Open Now', 'Khula') : t('Closed Now', 'Band')}
           </motion.span>
-        )}
-        <motion.span
-          variants={scaleIn}
-          className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full ${
-            openNow ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-          }`}
-        >
-          <span className={`w-2 h-2 rounded-full inline-block ${openNow ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`} />
-          {openNow ? t('Open Now', 'Abhi Khula Hai') : t('Closed Now', 'Abhi Band Hai')}
-        </motion.span>
-      </motion.div>
+        </motion.div>
 
-      {/* ── Hero card ── */}
+      {/* ── Hero card with Owner Photo ── */}
       <motion.div
         initial={{ opacity: 0, y: 32, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: 'easeOut' as const }}
-        className="rounded-3xl p-6 mb-6 text-white relative overflow-hidden shadow-2xl"
-        style={{ background: `linear-gradient(135deg, ${vendor.color || '#F97316'} 0%, ${vendor.color ? vendor.color + 'bb' : '#fb923c'} 100%)` }}
+        className="rounded-2xl md:rounded-3xl overflow-hidden mb-6 shadow-lg md:shadow-2xl"
       >
-        {/* animated decorative blobs */}
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], rotate: [0, 15, 0] }}
-          transition={{ repeat: Infinity, duration: 8, ease: 'easeInOut' as const }}
-          className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10"
-        />
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], rotate: [0, -10, 0] }}
-          transition={{ repeat: Infinity, duration: 10, ease: 'easeInOut' as const, delay: 1 }}
-          className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-white/10"
-        />
-        <motion.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ repeat: Infinity, duration: 6, ease: 'easeInOut' as const, delay: 2 }}
-          className="absolute top-1/2 right-16 w-16 h-16 rounded-full bg-white/5"
-        />
+        {/* Background: Shop Photo with Gradient Overlay */}
+        <div className="relative w-full bg-gradient-to-b from-blue-600 to-blue-800" style={{ aspectRatio: '16/9' }}>
+          {vendor.shop_photo_url ? (
+            <img
+              src={vendor.shop_photo_url}
+              alt="Shop"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : null}
+          
+          {/* Gradient overlay with vendor color */}
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/50" />
+          
+          {/* Color-branded overlay */}
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{ backgroundColor: vendor.color || '#7C3AED' }}
+          />
 
-        <div className="relative flex items-start gap-5">
-          {/* Avatar with ring animation */}
-          <motion.div
-            whileHover={{ scale: 1.08, rotate: 3 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-            className="w-20 h-20 rounded-2xl bg-white/25 flex items-center justify-center font-bold text-2xl flex-shrink-0 shadow-lg backdrop-blur-sm border-2 border-white/40 cursor-default select-none"
-          >
-            {vendor.initials || vendor.vendor_name.slice(0, 2).toUpperCase()}
-          </motion.div>
+          {/* Owner Photo - Positioned Front Left */}
+          <div className={vendor.owner_photo_url ? 'absolute bottom-0 left-0 p-4 md:p-6' : 'hidden'}>
+            {vendor.owner_photo_url && (
+              <div className="relative">
+                <img
+                  src={vendor.owner_photo_url}
+                  alt={`${vendor.vendor_name} Owner`}
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 md:border-6 border-white shadow-2xl"
+                />
+                <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full w-5 h-5 border-2 border-white" />
+              </div>
+            )}
+          </div>
 
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl md:text-3xl font-bold leading-tight">{vendor.vendor_name}</h1>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <span className="bg-white/25 text-white text-xs font-bold px-3 py-1 rounded-full border border-white/30">
-                {vendor.category}
-              </span>
-              <span className="bg-white/25 text-white text-xs font-bold px-3 py-1 rounded-full border border-white/30 flex items-center gap-1">
-                <BadgeCheck size={12} />
-                {t('Verified', 'Verified')}
-              </span>
-            </div>
-            {/* Stars */}
-            <div className="flex items-center gap-2 mt-3">
-              <span className="text-yellow-300 text-lg">
-                {'★'.repeat(Math.floor(displayRating))}{'☆'.repeat(5 - Math.floor(displayRating))}
-              </span>
-              <span className="font-bold text-lg">{displayRating.toFixed(1)}</span>
-              <span className="text-white/75 text-sm">· {displayReviews} {t('reviews', 'reviews')}</span>
+          {/* Info Section - Top Right */}
+          <div className="absolute top-0 right-0 left-0 p-4 md:p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight drop-shadow-lg mb-2">
+                  {vendor.vendor_name}
+                </h1>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1 bg-white/90 text-gray-900 text-xs font-bold px-2.5 md:px-3 py-1 rounded-full">
+                    {vendor.category}
+                  </span>
+                  <span className="inline-flex items-center gap-1 bg-white/90 text-gray-900 text-xs font-bold px-2.5 md:px-3 py-1 rounded-full flex-shrink-0">
+                    <BadgeCheck size={11} />
+                    Verified
+                  </span>
+                </div>
+              </div>
+              
+              {/* Rating Badge */}
+              <div className="bg-white/95 backdrop-blur-sm px-3 md:px-4 py-2 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
+                <div className="flex items-center gap-1">
+                  <span className="text-yellow-500 text-lg md:text-xl">★</span>
+                  <span className="font-bold text-base md:text-lg text-gray-900">{displayRating.toFixed(1)}</span>
+                </div>
+                <span className="text-xs text-gray-600 font-semibold">{displayReviews} reviews</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Like + Share */}
-        <div className="relative flex items-center gap-3 mt-5 pt-4 border-t border-white/20">
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            whileHover={{ scale: 1.05 }}
-            onClick={() => setLiked(l => !l)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all border ${liked ? 'bg-white text-red-500 border-white shadow-lg' : 'bg-white/20 text-white border-white/30 hover:bg-white/30'}`}
-          >
-            <motion.div animate={liked ? { scale: [1, 1.4, 1] } : {}} transition={{ duration: 0.3 }}>
-              <Heart size={15} className={liked ? 'fill-red-500' : ''} />
-            </motion.div>
-            {likeCount + (liked ? 1 : 0)}
-          </motion.button>
+        {/* Content Section Below Photo */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 md:p-6">
+          {/* Like + Share Buttons */}
+          <div className="relative flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setLiked(l => !l)}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition-all border ${liked ? 'bg-white text-blue-600 border-white shadow-lg' : 'bg-white/20 text-white border-white/40 hover:bg-white/30'}`}
+            >
+              <Heart size={13} className={liked ? 'fill-red-500' : ''} />
+              <span className="hidden xs:inline">{likeCount + (liked ? 1 : 0)}</span>
+            </button>
 
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            whileHover={{ scale: 1.05 }}
-            onClick={handleCopyLink}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm bg-white/20 text-white border border-white/30 hover:bg-white/30 transition-all"
-          >
-            {copiedLink ? <Check size={15} /> : <Share2 size={15} />}
-            {copiedLink ? t('Copied! ✓', 'Copy! ✓') : t('Share', 'Share')}
-          </motion.button>
+            <button
+              onClick={handleCopyLink}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm bg-white/20 text-white border border-white/40 hover:bg-white/30 transition-all"
+            >
+              {copiedLink ? <Check size={13} /> : <Share2 size={13} />}
+              <span className="hidden xs:inline">{copiedLink ? 'Copied' : 'Share'}</span>
+            </button>
 
-          <span className="ml-auto text-white/60 text-xs">
-            {t('Joined', 'Aaye')} {timeAgo(vendor.submission_timestamp, lang)}
-          </span>
+            <span className="ml-auto text-white/80 text-xs whitespace-nowrap">
+              {timeAgo(vendor.submission_timestamp, lang)}
+            </span>
+          </div>
         </div>
       </motion.div>
+
+      {/* ── Vendor Shop Photo (Dedicated Box) ── */}
+      <div className={vendor.shop_photo_url ? 'mb-6' : 'hidden'}>
+        <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+          <Camera size={20} className="text-blue-600" />
+          Shop Interior & Exterior
+        </h3>
+        {vendor.shop_photo_url ? (
+          <div className="rounded-xl md:rounded-2xl overflow-hidden shadow-lg md:shadow-xl border-3 md:border-4 border-blue-100">
+            <div className="relative w-full bg-gray-100" style={{ aspectRatio: '4/3' }}>
+              <img
+                src={vendor.shop_photo_url}
+                alt={`${vendor.vendor_name} Shop`}
+                onError={(e) => { e.currentTarget.src = ''; }}
+                loading="lazy"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+              <div className="absolute bottom-3 md:bottom-4 left-3 md:left-4 flex items-center gap-2 text-white">
+                <Camera size={16} className="flex-shrink-0" />
+                <span className="text-xs md:text-sm font-semibold">Shop Overview</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       {/* ── Info panel ── */}
       <motion.div
@@ -463,7 +521,36 @@ export default function VendorProfilePage() {
         ))}
       </motion.div>
 
-      {/* ── Stats row ── */}
+      {/* ── Shareable Link ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-40px' }}
+        transition={{ duration: 0.45 }}
+        className="rounded-2xl p-4 mb-6 bg-purple-50 border border-purple-200"
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <Share2 size={16} className="text-purple-600" />
+          <span className="text-xs font-bold text-purple-700 uppercase tracking-widest">Share This Vendor</span>
+        </div>
+        <div className="flex items-center gap-2 bg-white rounded-xl p-3 border border-purple-200">
+          <input
+            ref={linkRef}
+            type="text"
+            value={shareableLink}
+            readOnly
+            className="flex-1 text-xs font-mono text-gray-600 bg-transparent outline-none"
+          />
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleCopyLink}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-100 text-purple-700 font-bold text-xs hover:bg-purple-200 transition-colors"
+          >
+            {copiedLink ? <Check size={12} /> : <Copy size={12} />}
+            {copiedLink ? 'Copied' : 'Copy'}
+          </motion.button>
+        </div>
+      </motion.div>
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -554,7 +641,7 @@ export default function VendorProfilePage() {
           {t('Pay & Contact', 'Payment aur Contact')}
         </h2>
         <div className="space-y-3">
-          {vendor.upi_id && (
+          <div className={vendor.upi_id ? '' : 'hidden'}>
             <motion.div
               whileHover={{ scale: 1.01 }}
               className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-3 flex items-center gap-3 border border-white/30"
@@ -583,8 +670,9 @@ export default function VendorProfilePage() {
                 </AnimatePresence>
               </motion.button>
             </motion.div>
-          )}
-          {vendor.whatsapp_number && (
+          </div>
+          
+          <div className={vendor.whatsapp_number ? '' : 'hidden'}>
             <motion.a
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
@@ -597,12 +685,13 @@ export default function VendorProfilePage() {
               <span className="flex-1">{t('Chat on WhatsApp', 'WhatsApp pe Baat Karo')}</span>
               <span className="text-sm opacity-90 font-mono">+91 {vendor.whatsapp_number}</span>
             </motion.a>
-          )}
-          {!vendor.upi_id && !vendor.whatsapp_number && (
+          </div>
+          
+          <div className={!vendor.upi_id && !vendor.whatsapp_number ? '' : 'hidden'}>
             <div className="bg-white/20 rounded-xl p-4 text-center">
               <p className="opacity-80 text-sm">{t('Contact details not added yet. Visit them directly!', 'Contact details abhi nahi hain. Seedha mil lo!')}</p>
             </div>
-          )}
+          </div>
         </div>
       </motion.div>
 
@@ -820,6 +909,7 @@ export default function VendorProfilePage() {
           </Link>
         </motion.div>
       </motion.div>
+      </div>
     </div>
   );
 }
