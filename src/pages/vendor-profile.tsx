@@ -176,8 +176,15 @@ function getAutoReviews(category: string, vendorName: string, lang: string) {
 }
 
 /* ─── Share Toast ─────────────────────────────────────────────── */
-function hideImageOnError(e: React.SyntheticEvent<HTMLImageElement>) {
-  e.currentTarget.style.display = 'none';
+function applyImageFallback(e: React.SyntheticEvent<HTMLImageElement>, fallbackSrc: string) {
+  const img = e.currentTarget;
+  const alreadyTriedFallback = img.dataset.fallbackApplied === '1';
+  if (alreadyTriedFallback) {
+    img.style.display = 'none';
+    return;
+  }
+  img.dataset.fallbackApplied = '1';
+  img.src = fallbackSrc;
 }
 
 function ShareToast({ visible, shareText }: { visible: boolean; shareText?: string }) {
@@ -391,7 +398,7 @@ export default function VendorProfilePage() {
               src={coverPhotoUrl}
               alt={`${vendor.vendor_name} Shop`}
               loading="lazy"
-              onError={hideImageOnError}
+              onError={(e) => applyImageFallback(e, '/assets/vendors/shop-street-food.jpg')}
               className="absolute inset-0 w-full h-full object-cover"
             />
           ) : null}
@@ -408,7 +415,7 @@ export default function VendorProfilePage() {
                   src={vendor.owner_photo_url}
                   alt={`${vendor.vendor_name} Owner`}
                   loading="lazy"
-                  onError={hideImageOnError}
+                  onError={(e) => applyImageFallback(e, '/assets/vendors/owner-street-vendor.jpg')}
                   className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-2xl ring-4 ring-blue-300/50"
                 />
               ) : (
@@ -489,7 +496,7 @@ export default function VendorProfilePage() {
               <img
                 src={vendor.shop_photo_url}
                 alt={`${vendor.vendor_name} Shop`}
-                onError={hideImageOnError}
+                onError={(e) => applyImageFallback(e, '/assets/vendors/shop-tea-stall.jpg')}
                 loading="lazy"
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
               />
