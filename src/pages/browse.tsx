@@ -33,16 +33,27 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+function applyImageFallback(e: React.SyntheticEvent<HTMLImageElement>, fallbackSrc: string) {
+  const img = e.currentTarget;
+  const alreadyTriedFallback = img.dataset.fallbackApplied === '1';
+  if (alreadyTriedFallback) {
+    img.style.display = 'none';
+    return;
+  }
+  img.dataset.fallbackApplied = '1';
+  img.src = fallbackSrc;
+}
+
 function OpenPill({ hours, t }: { hours: string; t: (en: string, hi: string) => string }) {
   const openNow = isOpenNow(hours);
   return (
     <span
-      className={`text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 ${
+      className={`text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 w-fit ${
         openNow ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
       }`}
     >
       <span className={`w-1.5 h-1.5 rounded-full inline-block ${openNow ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`} />
-      {openNow ? t('Open Now', 'Abhi Khula Hai') : t('Closed', 'Band Hai')}
+      {openNow ? t('🟢 Open Now', '🟢 Abhi Khula Hai') : t('🔴 Closed', '🔴 Band Hai')}
     </span>
   );
 }
@@ -364,6 +375,7 @@ export default function BrowsePage() {
                         whileHover={{ scale: 1.08 }}
                         src={v.photo_url}
                         alt={v.vendor_name}
+                        onError={(e) => applyImageFallback(e, '/assets/vendors/shop-street-food.jpg')}
                         className="w-14 h-14 rounded-2xl object-cover flex-shrink-0 shadow-sm border-2 border-orange-100"
                       />
                     ) : (
