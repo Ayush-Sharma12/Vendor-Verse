@@ -75,6 +75,7 @@ async function loadOptionalPlugins(mode: string): Promise<{
 	const reactBabelPlugins: unknown[] = [];
 
 	try {
+		// @ts-ignore - Optional module
 		const mod = await import("./source-mapper/src/index");
 		const maybePlugin = (mod as any)?.default ?? mod;
 		if (maybePlugin) reactBabelPlugins.push(maybePlugin);
@@ -84,18 +85,21 @@ async function loadOptionalPlugins(mode: string): Promise<{
 
 	if (mode === "development") {
 		try {
+			// @ts-ignore - Optional module
 			const mod = await import("./dev-tools/src/vite-plugin");
 			if ((mod as any)?.devToolsPlugin) devPlugins.push((mod as any).devToolsPlugin() as Plugin);
 		} catch {
 			// Optional: repo may not include dev-tools
 		}
 		try {
+			// @ts-ignore - Optional module
 			const mod = await import("./fullstory-plugin");
 			if ((mod as any)?.fullStoryPlugin) devPlugins.push((mod as any).fullStoryPlugin() as Plugin);
 		} catch {
 			// Optional: repo may not include fullstory plugin
 		}
 		try {
+			// @ts-ignore - Optional module
 			const mod = await import("./dev-tools/src/vite-error-interceptor");
 			if ((mod as any)?.errorInterceptorPlugin)
 				devPlugins.push((mod as any).errorInterceptorPlugin() as Plugin);
@@ -103,6 +107,7 @@ async function loadOptionalPlugins(mode: string): Promise<{
 			// Optional: repo may not include dev-tools
 		}
 		try {
+			// @ts-ignore - Optional module
 			const mod = await import("./dev-tools/src/vite-media-versions-plugin");
 			if ((mod as any)?.mediaVersionsPlugin)
 				devPlugins.push((mod as any).mediaVersionsPlugin() as Plugin);
