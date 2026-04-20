@@ -305,6 +305,7 @@ export default function VendorProfilePage() {
   const baseUrl = window.location.origin;
   const shareableLink = `${baseUrl}/vendor/${vendor.id}?ref=${encodeURIComponent(vendor.vendor_name)}`;
   const shareableText = `🏪 ${vendor.vendor_name} - ${vendor.category}\n📍 ${vendor.location}\n⭐ ${displayRating.toFixed(1)} (${displayReviews} reviews)\n🔗 ${shareableLink}`;
+  const coverPhotoUrl = vendor.photo_url || vendor.shop_photo_url;
 
   return (
     <div className="text-[#1C1C1C] min-h-screen bg-gray-50">
@@ -381,35 +382,38 @@ export default function VendorProfilePage() {
       >
         {/* Background: Shop Photo with Gradient Overlay */}
         <div className="relative w-full bg-gradient-to-b from-blue-600 to-blue-800" style={{ aspectRatio: '16/9' }}>
-          {vendor.shop_photo_url ? (
+          {coverPhotoUrl ? (
             <img
-              src={vendor.shop_photo_url}
-              alt="Shop"
+              src={coverPhotoUrl}
+              alt={`${vendor.vendor_name} Shop`}
+              loading="lazy"
+              onError={(e) => { e.currentTarget.src = ''; }}
               className="absolute inset-0 w-full h-full object-cover"
             />
           ) : null}
           
-          {/* Gradient overlay with vendor color */}
-          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/50" />
-          
-          {/* Color-branded overlay */}
-          <div 
-            className="absolute inset-0 opacity-40"
-            style={{ backgroundColor: vendor.color || '#7C3AED' }}
-          />
+          {/* Blue overlay (matches design) */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 via-blue-700/40 to-black/50" />
+          <div className="absolute inset-0 bg-blue-700/30" />
 
           {/* Owner Photo - Positioned Front Left */}
-          <div className={vendor.owner_photo_url ? 'absolute bottom-0 left-0 p-4 md:p-6' : 'hidden'}>
-            {vendor.owner_photo_url && (
-              <div className="relative">
+          <div className="absolute bottom-0 left-0 p-4 md:p-6">
+            <div className="relative">
+              {vendor.owner_photo_url ? (
                 <img
                   src={vendor.owner_photo_url}
                   alt={`${vendor.vendor_name} Owner`}
-                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 md:border-6 border-white shadow-2xl"
+                  loading="lazy"
+                  onError={(e) => { e.currentTarget.src = ''; }}
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-2xl ring-4 ring-blue-300/50"
                 />
-                <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full w-5 h-5 border-2 border-white" />
-              </div>
-            )}
+              ) : (
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-blue-500/30 border-4 border-white shadow-2xl ring-4 ring-blue-300/50 flex items-center justify-center text-white font-black text-2xl sm:text-3xl">
+                  {(vendor.initials || vendor.vendor_name.slice(0, 2)).toUpperCase()}
+                </div>
+              )}
+              <div className={`absolute -bottom-2 -right-2 rounded-full w-5 h-5 border-2 border-white ${openNow ? 'bg-green-500' : 'bg-red-400'}`} />
+            </div>
           </div>
 
           {/* Info Section - Top Right */}
