@@ -12,6 +12,12 @@
   "trailingSlash": false,
   "routes": [
     {
+      "src": "/assets/vendors/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate"
+      }
+    },
+    {
       "src": "/assets/(.*)",
       "headers": {
         "cache-control": "public, max-age=31536000, immutable"
