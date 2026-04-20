@@ -44,17 +44,24 @@ function applyImageFallback(e: React.SyntheticEvent<HTMLImageElement>, fallbackS
   img.src = fallbackSrc;
 }
 
-function OpenPill({ hours, t }: { hours: string; t: (en: string, hi: string) => string }) {
+function OpenPill({ hours, t, registeredBy }: { hours: string; t: (en: string, hi: string) => string; registeredBy?: string }) {
   const openNow = isOpenNow(hours);
   return (
-    <span
-      className={`text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 w-fit ${
-        openNow ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-      }`}
-    >
-      <span className={`w-1.5 h-1.5 rounded-full inline-block ${openNow ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`} />
-      {openNow ? t('🟢 Open Now', '🟢 Abhi Khula Hai') : t('🔴 Closed', '🔴 Band Hai')}
-    </span>
+    <div className="flex flex-col gap-1">
+      <span
+        className={`text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 w-fit ${
+          openNow ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+        }`}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full inline-block ${openNow ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`} />
+        {openNow ? t('🟢 Open Now', '🟢 Abhi Khula Hai') : t('🔴 Closed', '🔴 Band Hai')}
+      </span>
+      {registeredBy && (
+        <span className="text-xs text-gray-500">
+          {t('Registered by: ', 'Registered by: ')}<span className="font-semibold text-gray-700">{registeredBy.split(',')[0]}</span>
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -209,7 +216,7 @@ export default function BrowsePage() {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="bg-orange-100 text-[#F97316] text-xs font-semibold px-2 py-0.5 rounded-full w-fit">{v.category}</span>
-                  <OpenPill hours={v.hours} t={t} />
+                  <OpenPill hours={v.hours} t={t} registeredBy={v.registered_by} />
                 </div>
                 <div className="flex items-center gap-2">
                   <StarRating rating={v.rating || 0} />
@@ -278,7 +285,7 @@ export default function BrowsePage() {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="bg-orange-100 text-[#F97316] text-xs font-semibold px-2 py-0.5 rounded-full w-fit">{v.category}</span>
-                  <OpenPill hours={v.hours} t={t} />
+                  <OpenPill hours={v.hours} t={t} registeredBy={v.registered_by} />
                 </div>
                 <div className="flex items-center gap-1 text-sm text-gray-600">
                   <MapPin size={14} className="text-[#F97316]" />
