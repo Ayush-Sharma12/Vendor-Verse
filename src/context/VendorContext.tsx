@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 
 export interface Vendor {
   id: string;
@@ -11,7 +18,7 @@ export interface Vendor {
   whatsapp_number?: string;
   registered_by: string;
   submission_timestamp: string;
-  status: 'new' | 'active' | 'featured';
+  status: "new" | "active" | "featured";
   rating?: number;
   reviews?: number;
   profile_url?: string;
@@ -22,64 +29,123 @@ export interface Vendor {
   last_viewed_timestamp?: string;
 }
 
+type NewVendor = Omit<Vendor, "id" | "submission_timestamp" | "status">;
+
 interface VendorContextType {
   vendors: Vendor[];
   totalCount: number;
-  addVendor: (v: Omit<Vendor, 'id' | 'submission_timestamp' | 'status'>) => Promise<Vendor>;
-  refreshVendors: () => Promise<void>;
   newlyAddedId: string | null;
+  addVendor: (vendor: NewVendor) => Promise<Vendor>;
+  refreshVendors: () => Promise<void>;
 }
 
 const VendorContext = createContext<VendorContextType>({
   vendors: [],
   totalCount: 0,
-  addVendor: async () => ({} as Vendor),
-  refreshVendors: async () => {},
   newlyAddedId: null,
+  addVendor: async () => {
+    throw new Error("VendorProvider not found");
+  },
+  refreshVendors: async () => {},
 });
 
-export function VendorProvider({ children }: { children: React.ReactNode }) {
+const POLLING_INTERVAL = 4000;
+
+export function VendorProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [newlyAddedId, setNewlyAddedId] = useState<string | null>(null);
 
   const refreshVendors = useCallback(async () => {
     try {
-      const res = await fetch('/api/vendors');
-      if (res.ok) {
-        const data = await res.json();
-        setVendors(data);
+      const response = await fetch("/api/vendors");
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
-    } catch (e) {
-      console.error('Failed to fetch vendors', e);
+
+      const data: Vendor[] = await response.json();
+      setVendors(data);
+    } catch (error) {
+      console.error("Failed to fetch vendors:", error);
     }
   }, []);
 
+  const addVendor = useCallback(
+    async (vendor: NewVendor): Promise<Vendor> => {
+      try {
+        const response = await fetch("/api/vendors", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(vendor),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to register vendor");
+        }
+
+        const newVendor: Vendor = await response.json();
+
+        setVendors((prev) => {
+          const exists = prev.some((v) => v.id === newVendor.id);
+          return exists ? prev : [newVendor, ...prev];
+        });
+
+        setNewlyAddedId(newVendor.id);
+
+        setTimeout(() => {
+          setNewlyAddedId(null);
+        }, 5000);
+
+        return newVendor;
+      } catch (error) {
+        console.error("Failed to add vendor:", error);
+        throw error;
+      }
+    },
+    []
+  );
+
   useEffect(() => {
     refreshVendors();
-    // Poll every 4 seconds for real-time updates
-    const interval = setInterval(refreshVendors, 4000);
-    return () => clearInterval(interval);
+
+    const intervalId = setInterval(
+      refreshVendors,
+      POLLING_INTERVAL
+    );
+
+    return () => clearInterval(intervalId);
   }, [refreshVendors]);
 
-  const addVendor = async (v: Omit<Vendor, 'id' | 'submission_timestamp' | 'status'>) => {
-    const res = await fetch('/api/vendors', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(v),
-    });
-    if (!res.ok) throw new Error('Failed to register vendor');
-    const newVendor: Vendor = await res.json();
-    setVendors(prev => [newVendor, ...prev]);
-    setNewlyAddedId(newVendor.id);
-    setTimeout(() => setNewlyAddedId(null), 5000);
-    return newVendor;
-  };
+  const value = useMemo(
+    () => ({
+      vendors,
+      totalCount: vendors.length,
+      addVendor,
+      refreshVendors,
+      newlyAddedId,
+    }),
+    [vendors, addVendor, refreshVendors, newlyAddedId]
+  );
 
   return (
-    <VendorContext.Provider value={{ vendors, totalCount: vendors.length, addVendor, refreshVendors, newlyAddedId }}>
+    <VendorContext.Provider value={value}>
       {children}
     </VendorContext.Provider>
   );
 }
 
-export const useVendors = () => useContext(VendorContext);
+export function useVendors() {
+  const context = useContext(VendorContext);
+
+  if (!context) {
+    throw new Error("useVendors must be used within VendorProvider");
+  }
+
+  return context;
+}
