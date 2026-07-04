@@ -4,7 +4,22 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useLang } from '@/context/LanguageContext';
 import { useVendors } from '@/context/VendorContext';
 import { isOpenNow } from '@/lib/isOpenNow';
-import { Star, MapPin, Sparkles, Search, X as XIcon } from 'lucide-react';
+import {
+  Star,
+  MapPin,
+  Sparkles,
+  Search,
+  X as XIcon,
+  Trophy,
+  Award,
+  Medal,
+  ShoppingCart,
+  Clock,
+  Smartphone,
+  CreditCard,
+  CheckCircle2,
+  SearchX,
+} from 'lucide-react';
 
 function timeAgo(ts: string, lang: string): string {
   const diff = Date.now() - new Date(ts).getTime();
@@ -54,7 +69,7 @@ function OpenPill({ hours, t, registeredBy }: { hours: string; t: (en: string, h
         }`}
       >
         <span className={`w-1.5 h-1.5 rounded-full inline-block ${openNow ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`} />
-        {openNow ? t('🟢 Open Now', '🟢 Abhi Khula Hai') : t('🔴 Closed', '🔴 Band Hai')}
+        {openNow ? t('Open Now', 'Abhi Khula Hai') : t('Closed', 'Band Hai')}
       </span>
       {registeredBy && (
         <span className="text-xs text-gray-500">
@@ -76,9 +91,9 @@ const CATEGORY_MAP: Record<string, string> = {
 };
 
 const RANK_BADGES = [
-  { bg: 'bg-yellow-400', text: 'text-yellow-900', label: '🥇' },
-  { bg: 'bg-gray-300', text: 'text-gray-800', label: '🥈' },
-  { bg: 'bg-orange-300', text: 'text-orange-900', label: '🥉' },
+  { bg: 'bg-yellow-400', text: 'text-yellow-900', label: 'Top Rated', Icon: Trophy },
+  { bg: 'bg-gray-300', text: 'text-gray-800', label: 'Top Rated', Icon: Award },
+  { bg: 'bg-orange-300', text: 'text-orange-900', label: 'Top Rated', Icon: Medal },
 ];
 
 export default function BrowsePage() {
@@ -139,7 +154,7 @@ export default function BrowsePage() {
             'Greater Noida ke local vendors dhundho — rated, reviewed, aur milne ke liye ready.'
           )}
         </p>
-        {/* ── Search bar ── */}
+        {/* Search bar */}
         <motion.div whileFocus={{ scale: 1.01 }} className="max-w-xl mx-auto relative">
           <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
@@ -181,7 +196,7 @@ export default function BrowsePage() {
         </AnimatePresence>
       </motion.div>
 
-      {/* ── Highest Rated ── */}
+      {/* Highest Rated */}
       {!searchQuery.trim() && <section className="bg-[#FFFBEB] py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="flex items-center gap-3 mb-2">
@@ -192,57 +207,71 @@ export default function BrowsePage() {
             {t('Top vendors loved most by customers — sorted by star rating.', 'Woh vendors jinhe customers sabse zyada pasand karte hain.')}
           </p>
           <div className="flex gap-5 overflow-x-auto pb-4 snap-x">
-            {topRated.map((v, i) => (
-              <motion.div
-                key={v.id}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -6, boxShadow: '0 16px 40px rgba(249,115,22,0.15)' }}
-                className="min-w-[280px] snap-start bg-white rounded-2xl shadow-md p-6 flex flex-col gap-3 border border-yellow-100"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{RANK_BADGES[i]?.label}</span>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${i === 0 ? 'bg-yellow-100 text-yellow-700' : i === 1 ? 'bg-gray-100 text-gray-600' : 'bg-orange-100 text-orange-700'}`}>
-                    {t('Top Rated', 'Sabse Accha')}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <motion.div whileHover={{ scale: 1.1 }} className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ backgroundColor: v.color || '#F97316' }}>
-                    {v.initials || v.vendor_name.slice(0, 2).toUpperCase()}
+            {topRated.map((v, i) => {
+              const badge = RANK_BADGES[i];
+              const RankIcon = badge?.Icon;
+              return (
+                <motion.div
+                  key={v.id}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  whileHover={{ y: -6, boxShadow: '0 16px 40px rgba(249,115,22,0.15)' }}
+                  className="min-w-[280px] snap-start bg-white rounded-2xl shadow-md p-6 flex flex-col gap-3 border border-yellow-100"
+                >
+                  <div className="flex items-center gap-2">
+                    {RankIcon && <RankIcon size={22} className={i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : 'text-orange-400'} />}
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${i === 0 ? 'bg-yellow-100 text-yellow-700' : i === 1 ? 'bg-gray-100 text-gray-600' : 'bg-orange-100 text-orange-700'}`}>
+                      {t('Top Rated', 'Sabse Accha')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <motion.div whileHover={{ scale: 1.1 }} className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ backgroundColor: v.color || '#F97316' }}>
+                      {v.initials || v.vendor_name.slice(0, 2).toUpperCase()}
+                    </motion.div>
+                    <div className="font-bold text-lg leading-tight">{v.vendor_name}</div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="bg-orange-100 text-[#F97316] text-xs font-semibold px-2 py-0.5 rounded-full w-fit">{v.category}</span>
+                    <OpenPill hours={v.hours} t={t} registeredBy={v.registered_by} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StarRating rating={v.rating || 0} />
+                    <span className="font-bold">{v.rating}</span>
+                    <span className="text-gray-500 text-sm">· {v.reviews} {t('reviews', 'reviews')}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <MapPin size={14} className="text-[#F97316]" />
+                    {v.location.split(',')[0]}
+                  </div>
+                  <div className="bg-[#FFF7ED] rounded-xl px-3 py-2 text-xs text-gray-600 space-y-1">
+                    {v.what_they_sell && (
+                      <div className="flex items-center gap-1.5 truncate">
+                        <ShoppingCart size={12} className="text-[#F97316] flex-shrink-0" />
+                        {v.what_they_sell}
+                      </div>
+                    )}
+                    {v.hours && (
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={12} className="text-[#F97316] flex-shrink-0" />
+                        {v.hours}
+                      </div>
+                    )}
+                  </div>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+                    <Link to={v.profile_url || `/vendor/${v.id}`} className="mt-auto bg-[#F97316] text-white text-center py-2.5 rounded-xl font-bold text-sm hover:bg-orange-600 transition-colors block">
+                      {t('See Full Profile →', 'Poori Detail Dekho →')}
+                    </Link>
                   </motion.div>
-                  <div className="font-bold text-lg leading-tight">{v.vendor_name}</div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="bg-orange-100 text-[#F97316] text-xs font-semibold px-2 py-0.5 rounded-full w-fit">{v.category}</span>
-                  <OpenPill hours={v.hours} t={t} registeredBy={v.registered_by} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <StarRating rating={v.rating || 0} />
-                  <span className="font-bold">{v.rating}</span>
-                  <span className="text-gray-500 text-sm">· {v.reviews} {t('reviews', 'reviews')}</span>
-                </div>
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <MapPin size={14} className="text-[#F97316]" />
-                  {v.location.split(',')[0]}
-                </div>
-                <div className="bg-[#FFF7ED] rounded-xl px-3 py-2 text-xs text-gray-600 space-y-1">
-                  {v.what_they_sell && <div className="truncate">🛒 {v.what_they_sell}</div>}
-                  {v.hours && <div>🕐 {v.hours}</div>}
-                </div>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-                  <Link to={v.profile_url || `/vendor/${v.id}`} className="mt-auto bg-[#F97316] text-white text-center py-2.5 rounded-xl font-bold text-sm hover:bg-orange-600 transition-colors block">
-                    {t('See Full Profile →', 'Poori Detail Dekho →')}
-                  </Link>
                 </motion.div>
-              </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>}
 
-      {/* ── Newly Added ── */}
+      {/* Newly Added */}
       {!searchQuery.trim() && <section className="bg-[#F0FDF4] py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="flex items-center gap-3 mb-2">
@@ -267,7 +296,9 @@ export default function BrowsePage() {
                   <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">{t('New', 'Naya')}</span>
                   <AnimatePresence>
                     {flashId === v.id && (
-                      <motion.span initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="text-green-600 text-xs font-bold animate-pulse">✓ Just added!</motion.span>
+                      <motion.span initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="text-green-600 text-xs font-bold animate-pulse flex items-center gap-1">
+                        <CheckCircle2 size={14} /> Just added!
+                      </motion.span>
                     )}
                   </AnimatePresence>
                   {latestVendor?.id === v.id && flashId !== v.id && (
@@ -298,8 +329,18 @@ export default function BrowsePage() {
                   </div>
                 )}
                 <div className="bg-green-50 rounded-xl px-3 py-2 text-xs text-gray-600 space-y-1 border border-green-100">
-                  {v.what_they_sell && <div className="truncate">🛒 {v.what_they_sell}</div>}
-                  {v.hours && <div>🕐 {v.hours}</div>}
+                  {v.what_they_sell && (
+                    <div className="flex items-center gap-1.5 truncate">
+                      <ShoppingCart size={12} className="text-green-600 flex-shrink-0" />
+                      {v.what_they_sell}
+                    </div>
+                  )}
+                  {v.hours && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={12} className="text-green-600 flex-shrink-0" />
+                      {v.hours}
+                    </div>
+                  )}
                 </div>
                 {v.rating && (
                   <div className="flex items-center gap-1">
@@ -318,7 +359,7 @@ export default function BrowsePage() {
         </div>
       </section>}
 
-      {/* ── Category Filter + All Vendors ── */}
+      {/* Category Filter + All Vendors */}
       <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-2xl md:text-3xl font-bold mb-6">
@@ -349,7 +390,9 @@ export default function BrowsePage() {
           {/* Vendor grid */}
           {filteredVendors.length === 0 ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
-              <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 3 }} className="text-6xl mb-4">🔍</motion.div>
+              <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 3 }} className="flex justify-center mb-4">
+                <SearchX size={56} className="text-gray-300" />
+              </motion.div>
               <h3 className="text-xl font-bold text-gray-700 mb-2">{t('No vendors found', 'Koi vendor nahi mila')}</h3>
               <p className="text-gray-500 mb-6">
                 {searchQuery.trim()
@@ -420,10 +463,30 @@ export default function BrowsePage() {
                     {v.location}
                   </div>
                   <div className="bg-[#FFF7ED] rounded-xl px-4 py-3 text-sm text-gray-600 space-y-1.5">
-                    {v.what_they_sell && <div className="truncate">🛒 <span className="font-medium">{v.what_they_sell}</span></div>}
-                    {v.hours && <div>🕐 {v.hours}</div>}
-                    {v.whatsapp_number && <div>📱 {t('WhatsApp available', 'WhatsApp available')}</div>}
-                    {v.upi_id && <div>💳 {t('UPI payment accepted', 'UPI payment milta hai')}</div>}
+                    {v.what_they_sell && (
+                      <div className="flex items-center gap-2 truncate">
+                        <ShoppingCart size={14} className="text-[#F97316] flex-shrink-0" />
+                        <span className="font-medium">{v.what_they_sell}</span>
+                      </div>
+                    )}
+                    {v.hours && (
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} className="text-[#F97316] flex-shrink-0" />
+                        {v.hours}
+                      </div>
+                    )}
+                    {v.whatsapp_number && (
+                      <div className="flex items-center gap-2">
+                        <Smartphone size={14} className="text-[#F97316] flex-shrink-0" />
+                        {t('WhatsApp available', 'WhatsApp available')}
+                      </div>
+                    )}
+                    {v.upi_id && (
+                      <div className="flex items-center gap-2">
+                        <CreditCard size={14} className="text-[#F97316] flex-shrink-0" />
+                        {t('UPI payment accepted', 'UPI payment milta hai')}
+                      </div>
+                    )}
                   </div>
                   {v.rating && (
                     <div className="flex items-center gap-2">
@@ -448,7 +511,7 @@ export default function BrowsePage() {
         </div>
       </section>
 
-      {/* ── Missing vendor banner ── */}
+      {/* Missing vendor banner */}
       <motion.section
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
